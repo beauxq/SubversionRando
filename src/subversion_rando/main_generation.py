@@ -404,6 +404,25 @@ def apply_rom_patches(game: Game, romWriter: RomWriter) -> None:
     # MapColors.asm - .circle
     romWriter.writeBytes(0xdd647, b"\x80")
 
+    # show major minor before collected
+    # MapColors.asm
+    # swap .collected and .not_collected branches (because we want not_collected to have 2 different symbols)
+    # change `BEQ .not_collected` to `BNE .not_collected`  f0 -> d0
+    romWriter.writeBytes(0xdd54c, b"\xd0")
+    # open circle is uncollected minor item
+    # change `JSR DrawTileDot` to `JSR DrawTileCircle`  20 ca d8 -> 20 f6 d8`
+    romWriter.writeBytes(0xdd56e, b"\x20\xf6\xd8")
+    # small dot is collected item
+    # change `JSR DrawTileCircle` to `JSR DrawTileDot  20 f6 d8 -> 20 ca d8`
+    romWriter.writeBytes(0xdd595, b"\x20\xca\xd8")
+    # same change to other section (I think one of these is mini map, and other is full map?)
+    # swap .collected and .not_collected branches  BEQ -> BNE
+    romWriter.writeBytes(0xdd625, b"\xd0")
+    # small dot change to circle  dd63b  a9 00 04 -> a9 00 02
+    romWriter.writeBytes(0xdd63b, b"\xa9\x00\x02")
+    # circle change to small dot  dd657  a9 00 02 -> a9 00 04
+    romWriter.writeBytes(0xdd657, b"\xa9\x00\x04")
+
     if game.options.small_spaceport:
         romWriter.writeBytes(0x106283, b'\x71\x01')  # zebetite health
         romWriter.writeBytes(0x204b3, b'\x08')  # fake zebetite hits taken
